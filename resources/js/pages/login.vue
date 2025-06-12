@@ -35,15 +35,15 @@ const errors = ref({
 const refVForm = ref()
 
 const credentials = ref({
-  email: 'admin@demo.com',
-  password: 'admin',
+  email: '',
+  password: '',
 })
 
 const rememberMe = ref(false)
 
 const login = async () => {
   try {
-    const res = await $api('/auth/login', {
+    const res = await $api('api/auth/login', {
       method: 'POST',
       body: {
         email: credentials.value.email,
