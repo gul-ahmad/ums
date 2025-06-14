@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Module;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -15,44 +16,41 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        $permissions = Permission::get();
+        // 1. Create Roles
+        $roles = ['Super Admin', 'Faculty', 'Rector', 'Director', 'HOD'];
 
-        $adminRole = new Role();
-        $adminRole->name = 'Super Admin';
-        $adminRole->guard_name = 'web';
-        $adminRole->save();
-
-        //assing all permissions to Super admin
-
-        if (!is_null($permissions)) {
-            foreach ($permissions as $key => $value) {
-
-                $permission = Permission::where('id', $value->id)->first();
-                $adminRole->givePermissionTo($permission);
-            }
+        foreach ($roles as $roleName) {
+            Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+            ]);
         }
 
-        //create super admin user
+        // 2. Assign all permissions to Super Admin
+        $allPermissions = Permission::all();
+        $superAdmin = Role::where('name', 'Super Admin')->first();
+        $superAdmin->syncPermissions($allPermissions);
 
-        // User Creation
-        $user = new User();
-        $user->name = 'Super Admin';
-        $user->email = 'superadmin@cuonline.com';
-        $user->password = bcrypt('password');
-        $user->save();
+        // 3. Faculty → permissions related to Student and Faculty modules (by module_id)
+        $facultyModuleIds = Module::whereIn('name', ['Student', 'Faculty'])->pluck('id');
+        $facultyPermissions = Permission::whereIn('module_id', $facultyModuleIds)->get();
 
-        $user->roles()->attach('1');
+        $faculty = Role::where('name', 'Faculty')->first();
+        $faculty->syncPermissions($facultyPermissions);
 
+        // 4. Rector, Director, HOD → random permissions
+        $randomRoles = ['Rector', 'Director', 'HOD'];
+        foreach ($randomRoles as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            $randomPermissions = $allPermissions->random(rand(5, 15));
+            $role->syncPermissions($randomPermissions);
+        }
 
-        // $DeptIdsfromUserAccount = UserAccount::all()->pluck('Dept_ID')->toArray();
-        // $uniqueDeptIds = array_unique($DeptIdsfromUserAccount);
-
-        // $departmentIdsfromDepartment = Department::all()
-        //   ->whereIn('Dept_ID', $uniqueDeptIds)
-        //   ->pluck('Dept_ID')->toArray();
-
-        //  dd($departmentIdsfromDepartment);
-
-        //$user->departments()->attach($departmentIdsfromDepartment);
+        // 5. Create Super Admin user if not exists and assign role
+        $user = User::firstOrCreate(
+            ['email' => 'superadmin@ums.com'],
+            ['name' => 'Super Admin', 'password' => bcrypt('password')]
+        );
+        $user->assignRole('Super Admin');
     }
 }

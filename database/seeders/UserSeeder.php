@@ -13,23 +13,39 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = [
-            ['name' => 'John Doe', 'email' => 'johndoe@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Jane Smith', 'email' => 'janesmith@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Bob Johnson', 'email' => 'bobjohnson@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Test 1', 'email' => 'test1@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Test 2', 'email' => 'test2@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Test 3', 'email' => 'test3@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Test 4', 'email' => 'test4@example.com', 'password' => bcrypt('password')],
-            ['name' => 'Test 5', 'email' => 'test5@example.com', 'password' => bcrypt('password')],
+        // Each user with their assigned role (not a DB column)
+        $usersWithRoles = [
+            ['name' => 'John Doe', 'email' => 'johndoe@example.com', 'role' => 'Faculty'],
+            ['name' => 'Facutly', 'email' => 'faculty@example.com', 'role' => 'Faculty'],
+            ['name' => 'Faculty1', 'email' => 'faculty1@example.com', 'role' => 'Faculty'],
+            ['name' => 'Faculty2', 'email' => 'facaculty2@example.com', 'role' => 'Faculty'],
+            ['name' => 'Faculty3', 'email' => 'facaculty3@example.com', 'role' => 'Faculty'],
+            ['name' => 'Faculty4', 'email' => 'facaculty4@example.com', 'role' => 'Faculty'],
+            ['name' => 'Jane Smith', 'email' => 'janesmith@example.com', 'role' => 'Rector'],
+            ['name' => 'Rector', 'email' => 'rector@example.com', 'role' => 'Rector'],
+            ['name' => 'Bob Johnson', 'email' => 'bobjohnson@example.com', 'role' => 'Director'],
+            ['name' => 'Test 1', 'email' => 'test1@example.com', 'role' => 'HOD'],
+            ['name' => 'Test 2', 'email' => 'test2@example.com'],
+            ['name' => 'Test 3', 'email' => 'test3@example.com'],
+            ['name' => 'Test 4', 'email' => 'test4@example.com'],
+            ['name' => 'Test 5', 'email' => 'test5@example.com'],
         ];
-        foreach ($users as $userData) {
-            $user = new User($userData);
-            $user->save();
-            // Associate the user with one or more departments
-            //   $departmentIds = Department::pluck('Dept_ID')->random(rand(1, 3))->toArray();
-            //$departmentIds = Department::limit(5)->pluck('Dept_ID')->toArray();
-            // $user->departments()->attach($departmentIds);
+
+        foreach ($usersWithRoles as $userData) {
+            $roleName = $userData['role'] ?? null;
+            unset($userData['role']);
+
+            $user = User::firstOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'password' => bcrypt('password'),
+                ]
+            );
+
+            if ($roleName) {
+                $user->assignRole($roleName);
+            }
         }
     }
 }
