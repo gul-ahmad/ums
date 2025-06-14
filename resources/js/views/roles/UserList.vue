@@ -29,14 +29,6 @@ const headers = [
     key: 'role',
   },
   {
-    title: 'Plan',
-    key: 'plan',
-  },
-  {
-    title: 'Billing',
-    key: 'billing',
-  },
-  {
     title: 'Status',
     key: 'status',
   },
@@ -67,28 +59,14 @@ const users = computed(() => usersData.value.users)
 const totalUsers = computed(() => usersData.value.totalUsers)
 
 // 👉 search filters
-const roles = [
-  {
-    title: 'Admin',
-    value: 'admin',
-  },
-  {
-    title: 'Author',
-    value: 'author',
-  },
-  {
-    title: 'Editor',
-    value: 'editor',
-  },
-  {
-    title: 'Maintainer',
-    value: 'maintainer',
-  },
-  {
-    title: 'Subscriber',
-    value: 'subscriber',
-  },
-]
+const roleFilterOptions = ref([ // Renamed from 'roles' to avoid conflict with user's role property
+  { title: 'All', value: '' }, // Option to clear filter
+  { title: 'Super Admin', value: 'Super Admin' }, // Ensure these values match your DB role names
+  { title: 'Faculty', value: 'Faculty' },
+  { title: 'Rector', value: 'Rector' },
+  { title: 'Director', value: 'Director' },
+  { title: 'HOD', value: 'HOD' },
+]);
 
 const resolveUserRoleVariant = role => {
   const roleLowerCase = role.toLowerCase()
@@ -197,7 +175,7 @@ const deleteUser = async id => {
           <AppSelect
             v-model="selectedRole"
             placeholder="Select Role"
-            :items="roles"
+            :items="roleFilterOptions"
             clearable
             clear-icon="tabler-x"
             style="inline-size: 10rem;"
