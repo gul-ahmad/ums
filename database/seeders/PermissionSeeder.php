@@ -22,27 +22,27 @@ class PermissionSeeder extends Seeder
         foreach ($modules as $module) {
             $permissions[] = [
                 'name' => 'show ' . strtolower($module->name),
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'module_id' => $module->id
             ];
             $permissions[] = [
                 'name' => 'create ' . strtolower($module->name),
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'module_id' => $module->id
             ];
             $permissions[] = [
                 'name' => 'edit ' . strtolower($module->name),
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'module_id' => $module->id
             ];
             $permissions[] = [
                 'name' => 'delete ' . strtolower($module->name),
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'module_id' => $module->id
             ];
             $permissions[] = [
                 'name' => 'view ' . strtolower($module->name),
-                'guard_name' => 'web',
+                'guard_name' => 'api',
                 'module_id' => $module->id
             ];
         }

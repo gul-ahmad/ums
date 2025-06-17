@@ -56,7 +56,9 @@ const fetchUsers = async () => {
     // Clean up undefined params before sending
     Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
-    const response = await axios.get('/api/users', { params });
+    //const response = await axios.get('/api/users', { params });
+    const response = await $api('/users', { params });
+
 
     users.value = response.data.users.map(userFromApi => ({
       id: userFromApi.id,

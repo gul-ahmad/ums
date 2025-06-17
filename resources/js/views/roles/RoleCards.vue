@@ -1,5 +1,6 @@
 <script setup>
 
+import { $api } from '@/utils/api';
 import avatar1 from '@images/avatars/avatar-1.png';
 import avatar2 from '@images/avatars/avatar-2.png';
 import avatar3 from '@images/avatars/avatar-3.png';
@@ -24,7 +25,10 @@ const allPermissionsForDialog = ref([]);
 const fetchRoles = async () => {
   isLoading.value = true;
   try {
-    const response = await axios.get('/api/roles');
+    //const response = await axios.get('/api/roles');
+    alert('Fetching roles');
+    const response = await $api('/roles');
+    console.log('roles:', response.data);
     rolesFromApi.value = response.data; 
   } catch (error) {
     console.error('Failed to fetch roles:', error);
@@ -35,7 +39,8 @@ const fetchRoles = async () => {
 
 const fetchAllPermissions = async () => {
   try {
-    const response = await axios.get('/api/permissions');
+    //const response = await axios.get('/api/permissions');
+    const response = await $api('/permissions');
     allPermissionsForDialog.value = response.data;
   } catch (error) {
     console.error('Failed to fetch permissions:', error);
@@ -50,7 +55,8 @@ onMounted(() => {
 const openEditRoleDialog = async (roleFromCard) => { 
   try {
     isLoading.value = true;
-    const response = await axios.get(`/api/roles/${roleFromCard.id}`);
+   // const response = await axios.get(`/api/roles/${roleFromCard.id}`);
+    const response = await $api(`/roles/${roleFromCard.id}`);
     roleDetailForDialog.value = response.data;
     isRoleDialogVisible.value = true;
   } catch (error)

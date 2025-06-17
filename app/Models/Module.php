@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Contracts\Permission;
+use Spatie\Permission\Models\Permission;
 
 class Module extends Model
 {

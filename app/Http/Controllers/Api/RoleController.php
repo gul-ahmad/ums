@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Module;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
@@ -14,21 +15,20 @@ class RoleController extends Controller
      */
     public function index()
     {
-        $roles = Role::withCount('users')
-            ->with('permissions')
-            ->get();
+        $roles = Role::with('permissions')->get();
 
         $formattedRoles = $roles->map(function ($role) {
-            // 1. Role Name
+            // Manually count users assigned to this role via model_has_roles
+            $usersCount = DB::table('model_has_roles')
+                ->where('role_id', $role->id)
+                ->where('model_type', config('auth.providers.users.model')) // usually App\Models\User
+                ->count();
+
             $roleName = $role->name;
 
-            // 2. Users Count
-            $usersCount = $role->users_count;
-
-            // 3. Permissions Details (Mapping from Spatie to Vuexy's structure)
             $permissionsDetails = [];
             $permissionsByModule = $role->permissions->groupBy(function ($permission) {
-                $module = Module::find($permission->module_id); // Assumes module_id is on permission
+                $module = \App\Models\Module::find($permission->module_id); // Caching would be better for perf
                 return $module ? $module->name : 'General';
             });
 
@@ -39,6 +39,7 @@ class RoleController extends Controller
                     'write' => false,
                     'create' => false,
                 ];
+
                 foreach ($permissionsInModule as $permission) {
                     if (str_starts_with($permission->name, 'show') || str_starts_with($permission->name, 'view')) {
                         $modulePermissionDetails['read'] = true;
@@ -50,14 +51,14 @@ class RoleController extends Controller
                         $modulePermissionDetails['create'] = true;
                     }
                 }
+
                 $permissionsDetails[] = $modulePermissionDetails;
             }
 
             return [
                 'id' => $role->id,
                 'role' => $roleName,
-                'users_count' => $usersCount, // We send the count
-                // NO 'users' array with avatar URLs sent from backend for now
+                'users_count' => $usersCount,
                 'details' => [
                     'name' => $roleName,
                     'permissions' => $permissionsDetails,
@@ -65,7 +66,9 @@ class RoleController extends Controller
             ];
         });
 
-        return response()->json($formattedRoles);
+        return response()->json([
+            'data' => $formattedRoles
+        ]);
     }
 
     /**

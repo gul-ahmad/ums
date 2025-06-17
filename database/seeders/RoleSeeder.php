@@ -8,6 +8,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
@@ -16,13 +17,14 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
         // 1. Create Roles
         $roles = ['Super Admin', 'Faculty', 'Rector', 'Director', 'HOD'];
 
         foreach ($roles as $roleName) {
             Role::firstOrCreate([
                 'name' => $roleName,
-                'guard_name' => 'web',
+                'guard_name' => 'api',
             ]);
         }
 

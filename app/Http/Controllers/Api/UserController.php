@@ -55,11 +55,14 @@ class UserController extends Controller
         $users = $query->paginate($perPage);
 
         return response()->json([
-            'users' => $users->items(),
-            'totalUsers' => $users->total(), 
-            // 'currentPage' => $users->currentPage(),
-            // 'lastPage' => $users->lastPage(),
-            // 'perPage' => $users->perPage(),
+            'data' => [
+                'users' => $users->items(),
+                'totalUsers' => $users->total(),
+                // Optionally include pagination info
+                //'currentPage' => $users->currentPage(),
+                // 'lastPage' => $users->lastPage(),
+                // 'perPage' => $users->perPage(),
+            ]
         ]);
     }
 
