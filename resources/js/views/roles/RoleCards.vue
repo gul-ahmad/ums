@@ -10,7 +10,7 @@ import girlUsingMobile from '@images/pages/girl-using-mobile.png';
 import axios from 'axios';
 import { onMounted, ref } from 'vue';
 
-//import AddEditRoleDialog from '@/views/apps/roles/AddEditRoleDialog.vue';
+import AddEditRoleDialog from '@/components/dialogs/AddEditRoleDialog.vue';
 
 
 const displayAvatars = [avatar1, avatar2, avatar3, avatar4];
@@ -19,16 +19,25 @@ const rolesFromApi = ref([]);
 const isLoading = ref(true);
 const isRoleDialogVisible = ref(false);
 const roleDetailForDialog = ref(null);
+const isDialogVisible = ref(false);
 const isAddRoleDialogVisible = ref(false);
 const allPermissionsForDialog = ref([]);
+
+const successMessage = ref(''); // For success notifications
+const errorMessage = ref('');   // For error notifications
+
+const closeDialog = () => {
+  isDialogVisible.value = false;
+  roleDetailForDialog.value = null; // Important to reset
+}
 
 const fetchRoles = async () => {
   isLoading.value = true;
   try {
     //const response = await axios.get('/api/roles');
-    alert('Fetching roles');
+    //alert('Fetching roles');
     const response = await $api('/roles');
-    console.log('roles:', response.data);
+   // console.log('roles:', response.data);
     rolesFromApi.value = response.data; 
   } catch (error) {
     console.error('Failed to fetch roles:', error);
@@ -41,7 +50,8 @@ const fetchAllPermissions = async () => {
   try {
     //const response = await axios.get('/api/permissions');
     const response = await $api('/permissions');
-    allPermissionsForDialog.value = response.data;
+    console.log('permissions:', response);
+    allPermissionsForDialog.value = response;
   } catch (error) {
     console.error('Failed to fetch permissions:', error);
   }
@@ -57,7 +67,8 @@ const openEditRoleDialog = async (roleFromCard) => {
     isLoading.value = true;
    // const response = await axios.get(`/api/roles/${roleFromCard.id}`);
     const response = await $api(`/roles/${roleFromCard.id}`);
-    roleDetailForDialog.value = response.data;
+    console.log(response);
+    roleDetailForDialog.value = response;
     isRoleDialogVisible.value = true;
   } catch (error)
   {
@@ -72,10 +83,58 @@ const openAddRoleDialog = () => {
   isAddRoleDialogVisible.value = true;
 };
 
-const handleRoleSaved = async () => {
-  isAddRoleDialogVisible.value = false;
-  isRoleDialogVisible.value = false;
-  await fetchRoles();
+// const handleRoleSaved = async () => {
+//   isAddRoleDialogVisible.value = false;
+//   isRoleDialogVisible.value = false;
+//   //await fetchRoles();
+// };
+const handleRoleSaved = async (formDataFromDialog) => {
+  isLoading.value = true;
+  successMessage.value = ''; // Clear previous messages
+  errorMessage.value = '';   // Clear previous messages
+
+  try {
+    let apiResponse;
+    if (formDataFromDialog.id) { // Editing
+      apiResponse = await $api(`/roles/${formDataFromDialog.id}`, {
+        method: 'PUT',
+        body: {
+          name: formDataFromDialog.name,
+          permissions: formDataFromDialog.permissions,
+        },
+      });
+      successMessage.value = apiResponse.message || 'Role updated successfully!';
+    } else { // Adding
+      apiResponse = await $api('/roles', {
+        method: 'POST',
+        body: {
+          name: formDataFromDialog.name,
+          permissions: formDataFromDialog.permissions,
+        },
+      });
+      successMessage.value = apiResponse.message || 'Role added successfully!';
+    }
+
+    closeDialog();
+    await fetchRoles();
+
+    // Clear success message after a few seconds
+    setTimeout(() => { successMessage.value = ''; }, 3000);
+
+  } catch (error) {
+    console.error('Failed to save role:', error.data || error.response?.data || error);
+    if (error.data && error.data.errors) { // Laravel Validation Errors (422)
+      // Format validation errors for display (simplistic for now)
+      const validationErrors = Object.values(error.data.errors).flat().join('\n');
+      errorMessage.value = `Validation Failed:\n${validationErrors}`;
+    } else {
+      errorMessage.value = error.data?.message || error.response?.data?.message || 'An unexpected error occurred while saving the role.';
+    }
+    // Don't clear error message immediately, let user see it
+    // You might want a way for the user to dismiss it
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const deleteRole = async (roleId) => {
@@ -95,6 +154,25 @@ const copyRole = (role) => {
 </script>
 
 <template>
+
+<VAlert
+    v-if="successMessage"
+    type="success"
+    closable
+    class="mb-4"
+    @click:close="successMessage = ''"
+  >
+    {{ successMessage }}
+  </VAlert>
+  <VAlert
+    v-if="errorMessage"
+    type="error"
+    closable
+    class="mb-4"
+    @click:close="errorMessage = ''"
+  >
+    <pre style="white-space: pre-wrap;">{{ errorMessage }}</pre> 
+  </VAlert>
   <VRow v-if="!isLoading">
     <VCol
       v-for="(item, roleIndex) in rolesFromApi"
@@ -180,12 +258,12 @@ const copyRole = (role) => {
     <VProgressCircular indeterminate color="primary" />
   </VRow>
 
-  <!-- <AddEditRoleDialog
+  <AddEditRoleDialog
     v-if="isAddRoleDialogVisible || isRoleDialogVisible"
     :is-dialog-visible="isAddRoleDialogVisible || isRoleDialogVisible"
     :role-data="roleDetailForDialog"
     :all-permissions="allPermissionsForDialog"
     @update:is-dialog-visible="val => { isAddRoleDialogVisible = val; isRoleDialogVisible = val; if (!val) roleDetailForDialog = null; }"
     @save="handleRoleSaved"
-  /> -->
+  />
 </template>

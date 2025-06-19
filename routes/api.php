@@ -28,7 +28,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::put('/roles/{role}', [RoleController::class, 'update']);
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
 
-    //Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
+    Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
 
     // Users
     Route::get('/users', [UserController::class, 'index']);

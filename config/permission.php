@@ -12,8 +12,11 @@ return [
          * The model you want to use as a Permission model needs to implement the
          * `Spatie\Permission\Contracts\Permission` contract.
          */
+        //gul here we have added our own Permission model by extending spatie base model
+        //so here we have used our own Permission model path for relationship with module
+        //'permission' => Spatie\Permission\Models\Permission::class,
+        'permission' => \App\Models\Permission::class,
 
-        'permission' => Spatie\Permission\Models\Permission::class,
 
         /*
          * When using the "HasRoles" trait from this package, we need to know which
