@@ -7,7 +7,7 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  roleData: {
+  roleData: { // This should now correctly receive `currentEditingRole` (which is null for "add")
     type: Object,
     default: null,
   },
@@ -15,8 +15,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-
-})
+});
 
 const emit = defineEmits([
   'update:isDialogVisible',
@@ -42,17 +41,21 @@ const updateSelectAllCheckboxState = () => {
 };
 
 // Populate form when dialog opens for editing or when allPermissions load
-watch(() => [props.roleData, props.allPermissions], ([newRoleData, newAllPermissions]) => {
-  if (newRoleData) { // Editing existing role
+watch(() => props.roleData, (newRoleData) => { // Watch only roleData for populating form
+  if (newRoleData && newRoleData.id) { // Editing existing role
     roleName.value = newRoleData.name || '';
     selectedPermissionIds.value = [...(newRoleData.assigned_permission_ids || [])];
-  } else { // Adding new role
+  } else { // Adding new role (roleData is null)
     roleName.value = '';
     selectedPermissionIds.value = [];
   }
-  // Check if all permissions are selected based on the current role's permissions
-  updateSelectAllCheckboxState();
+  updateSelectAllCheckboxState(); // Update based on (potentially empty) selectedPermissionIds
 }, { immediate: true, deep: true });
+
+
+watch(() => props.allPermissions, () => {
+    updateSelectAllCheckboxState(); // Re-evaluate select all if permissions list changes
+}, { deep: true });
 
 
 
@@ -63,21 +66,19 @@ watch(selectedPermissionIds, updateSelectAllCheckboxState, { deep: true });
 
 const closeDialog = () => {
   emit('update:isDialogVisible', false);
-  // Resetting form is good, but Vuexy's onReset also set isSelectAll=false
-  // Let RoleCards handle resetting roleDetailForDialog when it closes the dialog
 };
 
 const onReset = () => { // Called by DialogCloseBtn or Cancel button
-  // Reset local form state
-  if (props.roleData) { // If was editing
+ 
+  if (props.roleData) { 
     roleName.value = props.roleData.name || '';
     selectedPermissionIds.value = [...(props.roleData.assigned_permission_ids || [])];
-  } else { // If was adding
+  } else { 
     roleName.value = '';
     selectedPermissionIds.value = [];
   }
-  isSelectAllPermissions.value = false; // Reset select all
-  emit('update:isDialogVisible', false); // Close the dialog
+  isSelectAllPermissions.value = false; 
+  emit('update:isDialogVisible', false); 
 };
 
 
@@ -87,15 +88,15 @@ const onSubmit = () => {
       emit('save', {
         id: props.roleData ? props.roleData.id : undefined,
         name: roleName.value,
-        permissions: selectedPermissionIds.value, // Emit array of selected permission IDs
+        permissions: selectedPermissionIds.value, 
       });
-      // Don't close dialog here, let parent (RoleCards) do it on successful save
+      
     }
   });
 };
 
 
-// Toggle individual permission
+
 const togglePermission = (permissionId) => {
   const index = selectedPermissionIds.value.indexOf(permissionId);
   if (index > -1) {
@@ -105,29 +106,29 @@ const togglePermission = (permissionId) => {
   }
 };
 
-// Toggle all permissions for a specific module
+
 const toggleModulePermissions = (module, shouldSelect) => {
   module.permissions.forEach(p => {
     const index = selectedPermissionIds.value.indexOf(p.id);
-    if (shouldSelect) { // If master module checkbox is checked
+    if (shouldSelect) { 
       if (index === -1) selectedPermissionIds.value.push(p.id);
-    } else { // If master module checkbox is unchecked
+    } else { 
       if (index > -1) selectedPermissionIds.value.splice(index, 1);
     }
   });
 };
 
-// Check if all permissions in a module are selected
+
 const areAllModulePermissionsSelected = (module) => {
   if (!module || !module.permissions || module.permissions.length === 0) return false;
   return module.permissions.every(p => selectedPermissionIds.value.includes(p.id));
 };
 
-// For the global "Select All" checkbox
+
 const toggleAllPermissions = () => {
-  if (isSelectAllPermissions.value) { // If it's now true (was clicked to select all)
+  if (isSelectAllPermissions.value) { 
     selectedPermissionIds.value = props.allPermissions.flatMap(m => m.permissions.map(p => p.id));
-  } else { // If it's now false (was clicked to deselect all)
+  } else { /
     selectedPermissionIds.value = [];
   }
 };
@@ -145,15 +146,15 @@ const isGlobalIndeterminate = computed(() => {
   <VDialog
     :width="$vuetify.display.smAndDown ? 'auto' : 1100"
     :model-value="props.isDialogVisible"
-    @update:model-value="onReset"
+    @update:model-value="emit('update:isDialogVisible', $event)"
     persistent
   >
-    <DialogCloseBtn @click="onReset" />
+  <DialogCloseBtn @click="emit('update:isDialogVisible', false)" />
 
     <VCard class="pa-sm-10 pa-2">
       <VCardText>
         <h4 class="text-h4 text-center mb-2">
-          {{ props.roleData && props.roleData.id ? 'Edit' : 'Add New' }} Role
+          {{ props.roleData && props.roleData.id ? 'Edit Role' : 'Add New Role' }}
         </h4>
         <p class="text-body-1 text-center mb-6">
           Set Role Permissions
