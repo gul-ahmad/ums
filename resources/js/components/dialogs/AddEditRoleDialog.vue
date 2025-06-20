@@ -128,7 +128,7 @@ const areAllModulePermissionsSelected = (module) => {
 const toggleAllPermissions = () => {
   if (isSelectAllPermissions.value) { 
     selectedPermissionIds.value = props.allPermissions.flatMap(m => m.permissions.map(p => p.id));
-  } else { /
+  } else { 
     selectedPermissionIds.value = [];
   }
 };

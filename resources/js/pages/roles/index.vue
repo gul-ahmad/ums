@@ -1,6 +1,14 @@
 <script setup>
+
 import RoleCards from '@/views/roles/RoleCards.vue';
 import UserList from '@/views/roles/UserList.vue';
+
+definePage({
+  meta: {
+    action: 'read',
+    subject: 'Role',
+  },
+})
 </script>
 
 <template>
